@@ -120,6 +120,34 @@
   </script>
 </head>
 <body>
-  <!-- Existing HTML content should be pasted here -->
+  <div id="launcher">
+    <h1>EHR Outage Crisis Simulation</h1>
+    <button onclick="goToInstructor()">Instructor Dashboard</button>
+    <div id="team-links"></div>
+  </div>
+
+  <div id="instructor" class="hidden">
+    <h2>Instructor Dashboard</h2>
+    <button onclick="goToLauncher()">Back</button>
+    <button id="start-btn" onclick="startSimulation()">Start</button>
+    <button id="end-btn" onclick="endSimulation()" disabled>End</button>
+    <div id="crisis-timer" class="hidden">
+      Crisis Active - <span id="elapsed-time">00:00</span>
+    </div>
+    <div>
+      <button id="trauma-btn" onclick="triggerEvent('trauma')" disabled>Trigger Trauma</button>
+      <button id="media-btn" onclick="triggerEvent('media')" disabled>Trigger Media</button>
+      <button id="vendor-btn" onclick="triggerEvent('vendor')" disabled>Trigger Vendor</button>
+      <button id="recovery-btn" onclick="triggerEvent('recovery')" disabled>Trigger Recovery</button>
+    </div>
+    <div id="event-log"></div>
+  </div>
+
+  <div id="student" class="hidden">
+    <h2>Team: <span id="current-team"></span></h2>
+    <div>Status: <span id="system-status">CRITICAL</span></div>
+    <ul id="team-objectives"></ul>
+    <div id="crisis-alerts"></div>
+  </div>
 </body>
 </html>
