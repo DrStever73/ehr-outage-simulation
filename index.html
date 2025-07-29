@@ -5,7 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EHR Outage Crisis Simulation</title>
   <script defer>
-    // Utility Functions
+    // Define global state
+    let currentView = 'launcher';
+    let currentTeam = '';
+    let simulationState = {
+      isActive: false,
+      startTime: null
+    };
+
+    const teamRoles = {
+      'it_ops': { name: 'IT Operations Command', description: 'Technical coordination team', objectives: ['Restore Epic system', 'Manage incident response'] },
+      'clinical': { name: 'Clinical Team', description: 'Patient care team', objectives: ['Maintain patient safety', 'Coordinate clinical workflows'] }
+    };
+
+    const crisisEvents = {
+      trauma: { title: "🚨 LEVEL 1 TRAUMA INCOMING", description: "Multi-vehicle accident victims arriving.", impact: "ED overwhelmed, paper workflow needed" },
+      media: { title: "📺 MEDIA INQUIRY", description: "Channel 7 News calling.", impact: "CEO needs talking points" },
+      vendor: { title: "🔧 EPIC VENDOR UPDATE", description: "Epic support timeline: 4-6 hrs.", impact: "Activate downtime procedures" },
+      recovery: { title: "✅ PARTIAL RECOVERY", description: "Lab systems up. Meds still down.", impact: "Mixed pressure on workflows" }
+    };
+
     function copyLink(role) {
       const box = document.getElementById(role + '-link');
       navigator.clipboard.writeText(box.textContent);
@@ -24,13 +43,11 @@
       currentTeam = team;
       switchView('student');
       document.getElementById('current-team').textContent = teamRoles[team].name;
-      document.getElementById('team-role').textContent = teamRoles[team].description;
-      const list = document.getElementById('team-objectives');
-      list.innerHTML = '';
+      document.getElementById('team-objectives').innerHTML = '';
       teamRoles[team].objectives.forEach(obj => {
         const li = document.createElement('li');
         li.textContent = obj;
-        list.appendChild(li);
+        document.getElementById('team-objectives').appendChild(li);
       });
     }
 
@@ -47,10 +64,8 @@
       teamDiv.innerHTML = '';
       Object.keys(teamRoles).forEach(team => {
         const div = document.createElement('div');
-        div.className = 'team-item';
-        div.innerHTML = `<div class="team-name">${teamRoles[team].name}</div>
-            <div class="link-box">${window.location.href}#${team}</div>
-            <button class="btn btn-copy" onclick="navigator.clipboard.writeText('${window.location.href}#${team}')">📋 Copy</button>`;
+        div.innerHTML = `<div><strong>${teamRoles[team].name}</strong></div>
+            <div class="link-box">${window.location.href}#${team}</div>`;
         teamDiv.appendChild(div);
       });
     }
@@ -58,31 +73,18 @@
     function startSimulation() {
       simulationState.isActive = true;
       simulationState.startTime = Date.now();
-      simulationTimer = setInterval(updateTime, 1000);
       document.getElementById('start-btn').disabled = true;
       document.getElementById('end-btn').disabled = false;
       enableTriggers();
       document.getElementById('crisis-timer').classList.remove('hidden');
-      document.getElementById('status').textContent = '🔴 Simulation Active';
     }
 
     function endSimulation() {
       simulationState.isActive = false;
-      clearInterval(simulationTimer);
       document.getElementById('start-btn').disabled = false;
       document.getElementById('end-btn').disabled = true;
       disableTriggers();
       document.getElementById('crisis-timer').classList.add('hidden');
-      document.getElementById('status').textContent = '🟢 Ready';
-    }
-
-    function updateTime() {
-      const now = Date.now();
-      const elapsed = Math.floor((now - simulationState.startTime) / 1000);
-      const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-      const secs = String(elapsed % 60).padStart(2, '0');
-      document.getElementById('elapsed-time').textContent = `${mins}:${secs}`;
-      document.getElementById('outage-duration').textContent = Math.floor(elapsed / 60);
     }
 
     function enableTriggers() {
@@ -112,53 +114,18 @@
     }
 
     window.onload = function () {
-  populateLinks();
-  const hash = window.location.hash.replace('#', '');
-  if (hash === 'instructor') goToInstructor();
-  else if (teamRoles[hash]) goToStudent(hash);
-
-  // Initialize chat
-  const input = document.getElementById('message-input');
-  const sendBtn = document.getElementById('send-btn');
-  const chatArea = document.getElementById('chat-area');
-
-  if (input && sendBtn && chatArea) {
-    sendBtn.addEventListener('click', () => {
-      const msg = input.value.trim();
-      if (!msg) return;
-      const msgEl = document.createElement('div');
-      msgEl.style = 'margin-bottom: 10px; background: #e5e7eb; padding: 10px; border-radius: 5px;';
-      msgEl.textContent = `👤 You: ${msg}`;
-      chatArea.appendChild(msgEl);
-      input.value = '';
-      setTimeout(() => {
-        const response = generatePersonaResponse(msg);
-        const botEl = document.createElement('div');
-        botEl.style = 'margin-bottom: 10px; background: #dbeafe; padding: 10px; border-radius: 5px;';
-        botEl.textContent = `🧑‍⚕️ Persona: ${response}`;
-        chatArea.appendChild(botEl);
-        chatArea.scrollTop = chatArea.scrollHeight;
-      }, 500);
-    });
-  }
-}
-
-function generatePersonaResponse(input) {
-  const responses = [
-    "We're under pressure. Can you give me a status update?",
-    "This delay is impacting patient care. Any workaround?",
-    "Do we have a backup plan in place yet?",
-    "Communication is breaking down. Please coordinate with pharmacy.",
-    "We need to focus on safety. Keep me posted."
-  ];
-  return responses[Math.floor(Math.random() * responses.length)];
-}
+      populateLinks();
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'instructor') goToInstructor();
+      else if (teamRoles[hash]) goToStudent(hash);
+    }
   </script>
 </head>
 <body>
   <div id="launcher">
     <h1>EHR Outage Crisis Simulation</h1>
     <button onclick="goToInstructor()">Instructor Dashboard</button>
+    <div id="instructor-link"></div>
     <div id="team-links"></div>
   </div>
 
