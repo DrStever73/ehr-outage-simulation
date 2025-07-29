@@ -33,14 +33,14 @@
 
     const chatPersonas = {
       'it_ops': [
-        "We are currently restoring backups. Please stand by.",
-        "Working with Epic to get ETA on recovery.",
-        "Prioritize patient-facing issues and let us know critical ones."
+        "We're restoring backups and coordinating with Epic.",
+        "Please escalate critical patient safety concerns immediately.",
+        "ETA for full system recovery is 4-6 hours."
       ],
       'clinical': [
-        "We're overwhelmed—need more paper forms.",
-        "No access to orders or meds—what's the backup?",
-        "Can you confirm downtime documentation procedures?"
+        "Can someone bring us more paper MARs?",
+        "We're manually tracking vitals and meds now.",
+        "We need clear backup workflows and help from IT."
       ]
     };
 
@@ -56,6 +56,7 @@
 
     function goToStudent(team) {
       currentTeam = team;
+      localStorage.setItem('currentTeam', team);
       switchView('student');
       document.getElementById('current-team').textContent = teamRoles[team].name;
       document.getElementById('team-objectives').innerHTML = '';
@@ -64,6 +65,7 @@
         li.textContent = obj;
         document.getElementById('team-objectives').appendChild(li);
       });
+      setInterval(renderEvents, 3000); // poll every 3s
     }
 
     function switchView(view) {
@@ -88,6 +90,7 @@
     function startSimulation() {
       simulationState.isActive = true;
       simulationState.startTime = Date.now();
+      localStorage.setItem('simulationActive', 'true');
       document.getElementById('start-btn').disabled = true;
       document.getElementById('end-btn').disabled = false;
       enableTriggers();
@@ -96,6 +99,7 @@
 
     function endSimulation() {
       simulationState.isActive = false;
+      localStorage.setItem('simulationActive', 'false');
       document.getElementById('start-btn').disabled = false;
       document.getElementById('end-btn').disabled = true;
       disableTriggers();
@@ -116,16 +120,33 @@
 
     function triggerEvent(type) {
       const event = crisisEvents[type];
-      const alertDiv = document.createElement('div');
-      alertDiv.className = 'crisis-alert';
-      alertDiv.innerHTML = `<strong>${event.title}</strong><p>${event.description}</p><p><em>${event.impact}</em></p>`;
-      document.getElementById('crisis-alerts').prepend(alertDiv);
+      const timestamp = new Date().toLocaleTimeString();
+      const eventData = { type, timestamp };
+      let log = JSON.parse(localStorage.getItem('eventLog') || '[]');
+      log.push(eventData);
+      localStorage.setItem('eventLog', JSON.stringify(log));
+      renderEvents();
+    }
 
-      const log = document.getElementById('event-log');
-      const entry = document.createElement('div');
-      entry.className = 'event-notification';
-      entry.textContent = `${new Date().toLocaleTimeString()} - ${event.title}`;
-      log.prepend(entry);
+    function renderEvents() {
+      const log = JSON.parse(localStorage.getItem('eventLog') || '[]');
+      const alertsDiv = document.getElementById('crisis-alerts');
+      const eventLog = document.getElementById('event-log');
+      if (!alertsDiv || !eventLog) return;
+      alertsDiv.innerHTML = '';
+      eventLog.innerHTML = '';
+      log.reverse().forEach(e => {
+        const ev = crisisEvents[e.type];
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'crisis-alert';
+        alertDiv.innerHTML = `<strong>${ev.title}</strong><p>${ev.description}</p><p><em>${ev.impact}</em></p>`;
+        alertsDiv.appendChild(alertDiv);
+
+        const entry = document.createElement('div');
+        entry.className = 'event-notification';
+        entry.textContent = `${e.timestamp} - ${ev.title}`;
+        eventLog.appendChild(entry);
+      });
     }
 
     function sendChat() {
@@ -150,6 +171,18 @@
       const hash = window.location.hash.replace('#', '');
       if (hash === 'instructor') goToInstructor();
       else if (teamRoles[hash]) goToStudent(hash);
+
+      const storedTeam = localStorage.getItem('currentTeam');
+      if (storedTeam && teamRoles[storedTeam] && !hash) goToStudent(storedTeam);
+
+      if (localStorage.getItem('simulationActive') === 'true') {
+        simulationState.isActive = true;
+        document.getElementById('start-btn').disabled = true;
+        document.getElementById('end-btn').disabled = false;
+        document.getElementById('crisis-timer').classList.remove('hidden');
+        enableTriggers();
+        renderEvents();
+      }
     }
   </script>
 </head>
