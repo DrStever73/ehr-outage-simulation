@@ -112,11 +112,47 @@
     }
 
     window.onload = function () {
-      populateLinks();
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'instructor') goToInstructor();
-      else if (teamRoles[hash]) goToStudent(hash);
-    }
+  populateLinks();
+  const hash = window.location.hash.replace('#', '');
+  if (hash === 'instructor') goToInstructor();
+  else if (teamRoles[hash]) goToStudent(hash);
+
+  // Initialize chat
+  const input = document.getElementById('message-input');
+  const sendBtn = document.getElementById('send-btn');
+  const chatArea = document.getElementById('chat-area');
+
+  if (input && sendBtn && chatArea) {
+    sendBtn.addEventListener('click', () => {
+      const msg = input.value.trim();
+      if (!msg) return;
+      const msgEl = document.createElement('div');
+      msgEl.style = 'margin-bottom: 10px; background: #e5e7eb; padding: 10px; border-radius: 5px;';
+      msgEl.textContent = `👤 You: ${msg}`;
+      chatArea.appendChild(msgEl);
+      input.value = '';
+      setTimeout(() => {
+        const response = generatePersonaResponse(msg);
+        const botEl = document.createElement('div');
+        botEl.style = 'margin-bottom: 10px; background: #dbeafe; padding: 10px; border-radius: 5px;';
+        botEl.textContent = `🧑‍⚕️ Persona: ${response}`;
+        chatArea.appendChild(botEl);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }, 500);
+    });
+  }
+}
+
+function generatePersonaResponse(input) {
+  const responses = [
+    "We're under pressure. Can you give me a status update?",
+    "This delay is impacting patient care. Any workaround?",
+    "Do we have a backup plan in place yet?",
+    "Communication is breaking down. Please coordinate with pharmacy.",
+    "We need to focus on safety. Keep me posted."
+  ];
+  return responses[Math.floor(Math.random() * responses.length)];
+}
   </script>
 </head>
 <body>
