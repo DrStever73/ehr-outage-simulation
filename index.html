@@ -31,12 +31,18 @@
       recovery: { title: "✅ PARTIAL RECOVERY", description: "Lab systems up. Meds still down.", impact: "Mixed pressure on workflows" }
     };
 
-    const chatResponses = [
-      "Please follow downtime protocols immediately.",
-      "We are prioritizing patient safety.",
-      "ETA on system recovery is currently unknown.",
-      "All teams should escalate urgent needs through the command center."
-    ];
+    const chatPersonas = {
+      'it_ops': [
+        "We are currently restoring backups. Please stand by.",
+        "Working with Epic to get ETA on recovery.",
+        "Prioritize patient-facing issues and let us know critical ones."
+      ],
+      'clinical': [
+        "We're overwhelmed—need more paper forms.",
+        "No access to orders or meds—what's the backup?",
+        "Can you confirm downtime documentation procedures?"
+      ]
+    };
 
     function copyLink(role) {
       const box = document.getElementById(role + '-link');
@@ -130,9 +136,11 @@
       userMessage.textContent = "👤 You: " + input.value;
       chatBox.appendChild(userMessage);
 
+      const responses = chatPersonas[currentTeam] || ["[No response configured for this role.]"];
       const response = document.createElement('div');
-      response.textContent = "💬 System: " + chatResponses[Math.floor(Math.random() * chatResponses.length)];
+      response.textContent = "💬 Response: " + responses[Math.floor(Math.random() * responses.length)];
       chatBox.appendChild(response);
+
       input.value = '';
       chatBox.scrollTop = chatBox.scrollHeight;
     }
