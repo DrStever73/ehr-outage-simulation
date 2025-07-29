@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,6 +129,43 @@
             border-radius: 20px;
             font-size: 0.8rem;
         }
+        .crisis-alert {
+            background: #fef2f2;
+            border: 2px solid #dc2626;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .event-notification {
+            background: #fbbf24;
+            color: #92400e;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .simulation-controls {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .timer {
+            background: #dc2626;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -200,40 +236,55 @@
                 <button class="btn" onclick="goToLauncher()">← Back to Launcher</button>
             </div>
 
+            <div id="crisis-timer" class="timer hidden">
+                ⏱️ Crisis Active: <span id="elapsed-time">00:00</span> | Severity: <span id="crisis-level">CRITICAL</span>
+            </div>
+
             <div class="grid">
                 <div class="card">
                     <h2>Simulation Control</h2>
-                    <div style="margin: 20px 0;">
-                        <label><strong>Duration:</strong></label>
-                        <select style="width: 100%; padding: 8px; margin: 5px 0;">
-                            <option>2 hours (recommended)</option>
-                            <option>90 minutes</option>
-                            <option>3 hours</option>
-                        </select>
+                    <div class="simulation-controls">
+                        <div style="margin: 20px 0;">
+                            <label><strong>Duration:</strong></label>
+                            <select id="duration-select" style="width: 100%; padding: 8px; margin: 5px 0;">
+                                <option value="120">2 hours (recommended)</option>
+                                <option value="90">90 minutes</option>
+                                <option value="180">3 hours</option>
+                            </select>
+                        </div>
+                        <div style="margin: 20px 0;">
+                            <label><strong>Difficulty:</strong></label>
+                            <select id="difficulty-select" style="width: 100%; padding: 8px; margin: 5px 0;">
+                                <option value="medium">Medium - Realistic pressure</option>
+                                <option value="easy">Easy - Guided responses</option>
+                                <option value="hard">Hard - High stress</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-green" style="width: 100%; padding: 15px;" onclick="startSimulation()" id="start-btn">🚀 Start Crisis Simulation</button>
+                        <button class="btn" style="width: 100%; padding: 15px; background: #dc2626;" onclick="endSimulation()" id="end-btn" disabled>🛑 End Simulation</button>
                     </div>
-                    <div style="margin: 20px 0;">
-                        <label><strong>Difficulty:</strong></label>
-                        <select style="width: 100%; padding: 8px; margin: 5px 0;">
-                            <option>Medium - Realistic pressure</option>
-                            <option>Easy - Guided responses</option>
-                            <option>Hard - High stress</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-green" style="width: 100%; padding: 15px;">🚀 Start Crisis Simulation</button>
                 </div>
 
                 <div class="card">
                     <h2>Crisis Triggers</h2>
-                    <button class="btn" style="width: 100%; background: #f59e0b; margin: 5px 0;">🚨 Trauma Patient Arrival</button>
-                    <button class="btn" style="width: 100%; background: #8b5cf6; margin: 5px 0;">📺 Media Inquiry</button>
-                    <button class="btn" style="width: 100%; background: #ef4444; margin: 5px 0;">🔧 Epic Vendor Update</button>
+                    <button class="btn" style="width: 100%; background: #f59e0b; margin: 5px 0;" onclick="triggerEvent('trauma')" disabled id="trauma-btn">🚨 Trauma Patient Arrival</button>
+                    <button class="btn" style="width: 100%; background: #8b5cf6; margin: 5px 0;" onclick="triggerEvent('media')" disabled id="media-btn">📺 Media Inquiry</button>
+                    <button class="btn" style="width: 100%; background: #ef4444; margin: 5px 0;" onclick="triggerEvent('vendor')" disabled id="vendor-btn">🔧 Epic Vendor Update</button>
+                    <button class="btn" style="width: 100%; background: #059669; margin: 5px 0;" onclick="triggerEvent('recovery')" disabled id="recovery-btn">✅ Partial System Recovery</button>
                 </div>
             </div>
 
             <div class="card" style="margin-top: 20px;">
-                <h2>Team Overview</h2>
+                <h2>Team Overview & Activity</h2>
                 <div id="team-status">
                     <!-- Team status will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h2>Live Event Log</h2>
+                <div id="event-log" style="max-height: 200px; overflow-y: auto; background: #f9fafb; padding: 10px; border: 1px solid #d1d5db; border-radius: 5px;">
+                    <div style="color: #6b7280; text-align: center;">No events yet. Start the simulation to begin logging.</div>
                 </div>
             </div>
         </div>
@@ -248,58 +299,82 @@
                 <button class="btn" onclick="goToLauncher()">← Exit Simulation</button>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px;">
-                    <div style="font-weight: bold;">🕐 Crisis Time</div>
-                    <div style="font-size: 1.2rem; font-weight: bold;">07:45 AM</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">Outage: 15 minutes</div>
-                </div>
-                <div style="background: #fff7ed; border-left: 4px solid #f97316; padding: 15px;">
-                    <div style="font-weight: bold;">👥 Status</div>
-                    <div style="font-weight: bold; color: #dc2626;">CRITICAL</div>
-                </div>
-                <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px;">
-                    <div style="font-weight: bold;">🎯 Your Role</div>
-                    <div style="font-size: 0.9rem;" id="team-role">Loading...</div>
+            <div id="simulation-not-started" class="card" style="background: #fef3c7; text-align: center;">
+                <h3>⏳ Waiting for Instructor to Start Simulation</h3>
+                <p>Your instructor hasn't started the crisis simulation yet. Please wait...</p>
+                <div style="margin: 20px 0;">
+                    <div style="display: inline-block; width: 20px; height: 20px; border: 3px solid #f59e0b; border-top: 3px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
                 </div>
             </div>
 
-            <div class="card" style="background: #fef3c7;">
-                <h3>🎯 Your Team Objectives:</h3>
-                <ul id="team-objectives">
-                    <!-- Objectives will be populated by JavaScript -->
-                </ul>
-            </div>
+            <div id="simulation-active" class="hidden">
+                <div id="crisis-alerts"></div>
 
-            <div class="grid" style="margin-top: 20px;">
-                <div class="card">
-                    <h3>Available Personas</h3>
-                    <div id="persona-list">
-                        <!-- Personas will be populated by JavaScript -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px;">
+                        <div style="font-weight: bold;">🕐 Crisis Time</div>
+                        <div style="font-size: 1.2rem; font-weight: bold;" id="student-timer">07:30 AM</div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">Outage: <span id="outage-duration">0</span> minutes</div>
+                    </div>
+                    <div style="background: #fff7ed; border-left: 4px solid #f97316; padding: 15px;">
+                        <div style="font-weight: bold;">👥 Status</div>
+                        <div style="font-weight: bold; color: #dc2626;" id="system-status">CRITICAL</div>
+                    </div>
+                    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px;">
+                        <div style="font-weight: bold;">🎯 Your Role</div>
+                        <div style="font-size: 0.9rem;" id="team-role">Loading...</div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3>Crisis Communication</h3>
-                    <div style="border: 1px solid #d1d5db; height: 200px; padding: 10px; background: #f9fafb; overflow-y: auto;" id="chat-area">
-                        <div style="text-align: center; color: #6b7280; margin-top: 80px;">
-                            Select a persona and start gathering information about the crisis...
-                            <div style="margin-top: 10px; font-size: 0.9rem;">
-                                💡 Try asking: "What's your current situation?"
-                            </div>
+                <div class="card" style="background: #fef3c7;">
+                    <h3>🎯 Your Team Objectives:</h3>
+                    <ul id="team-objectives">
+                        <!-- Objectives will be populated by JavaScript -->
+                    </ul>
+                </div>
+
+                <div class="grid" style="margin-top: 20px;">
+                    <div class="card">
+                        <h3>Available Personas</h3>
+                        <div id="persona-list">
+                            <!-- Personas will be populated by JavaScript -->
                         </div>
                     </div>
-                    <div style="margin-top: 10px; display: flex; gap: 10px;">
-                        <input type="text" id="message-input" placeholder="Select a persona first..." style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 5px;" disabled>
-                        <button class="btn" onclick="sendMessage()" disabled id="send-btn">Send</button>
+
+                    <div class="card">
+                        <h3>Crisis Communication</h3>
+                        <div style="border: 1px solid #d1d5db; height: 300px; padding: 10px; background: #f9fafb; overflow-y: auto;" id="chat-area">
+                            <div style="text-align: center; color: #6b7280; margin-top: 120px;">
+                                Select a persona and start gathering information about the crisis...
+                                <div style="margin-top: 10px; font-size: 0.9rem;">
+                                    💡 Try asking: "What's your current situation?" or "How can we help?"
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                            <input type="text" id="message-input" placeholder="Select a persona first..." style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 5px;" disabled>
+                            <button class="btn" onclick="sendMessage()" disabled id="send-btn">Send</button>
+                        </div>
+                        <div id="persona-info" style="margin-top: 10px; padding: 10px; background: #fef3c7; border-left: 4px solid #f59e0b; font-size: 0.9rem; display: none;"></div>
                     </div>
-                    <div id="persona-info" style="margin-top: 10px; padding: 10px; background: #fef3c7; border-left: 4px solid #f59e0b; font-size: 0.9rem; display: none;"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Enhanced simulation state management
+        let simulationState = {
+            isActive: false,
+            startTime: null,
+            duration: 120,
+            difficulty: 'medium',
+            events: [],
+            severity: 'CRITICAL',
+            triggeredEvents: [],
+            systemStatus: 'DOWN'
+        };
+
         // Team and persona data
         const teamRoles = {
             'it_ops': {
@@ -334,34 +409,95 @@
             }
         };
 
+        // Enhanced personas with dynamic responses
         const personas = {
             'dr_chen_icu': {
-                name: 'Dr. Sarah Chen - ICU Director',
+                name: 'Dr. Sarah Chen',
+                title: 'ICU Director',
                 role: 'Critical Care Physician',
                 description: 'Managing 24 ICU patients, frustrated about medication orders',
                 stress_level: 'High',
-                priorities: ['Patient safety', 'Medication administration', 'Ventilator management']
+                priorities: ['Patient safety', 'Medication administration', 'Ventilator management'],
+                personality: 'direct, clinically focused, impatient with technical delays',
+                responses: {
+                    greeting: "This is Dr. Chen from ICU. We have 24 patients and I can't access any medication records. This is critical.",
+                    situation: "Every minute without Epic puts lives at risk. I have patients on continuous drips that need precise dosing. My nurses are overwhelmed with paper charts.",
+                    help: "I need Epic back online NOW. If that's not possible, give me a reliable way to access medication histories and current orders.",
+                    timeline: "How long? Because I have three patients who need immediate medication adjustments. Paper charts don't show interaction warnings.",
+                    pressure: "Look, I don't care about your technical problems. I care about keeping people alive. What's your backup plan?"
+                }
             },
             'nurse_williams': {
-                name: 'Nurse Manager Williams - ED',
+                name: 'Manager Williams',
+                title: 'ED Nurse Manager',
                 role: 'Emergency Department Nurse Manager',
                 description: 'Coordinating 15 nurses during busy morning shift',
                 stress_level: 'Very High',
-                priorities: ['Patient flow', 'Documentation', 'Staff coordination']
+                priorities: ['Patient flow', 'Documentation', 'Staff coordination'],
+                personality: 'overwhelmed, practical, team-focused',
+                responses: {
+                    greeting: "Williams here from ED. We're drowning without Epic. Fifteen nurses asking me questions I can't answer.",
+                    situation: "We have a trauma coming in 5 minutes and nowhere to document vitals or allergies. My staff is panicking.",
+                    help: "We need clear protocols for paper documentation and a way to communicate with other departments without Epic messaging.",
+                    timeline: "My nurses need to know NOW - are we doing full paper backup? Do we have enough forms? Who's coordinating with pharmacy?",
+                    pressure: "This is chaos. I have new grads who've never worked without computers. Can you send someone to help with workflows?"
+                }
             },
             'ceo_martinez': {
                 name: 'CEO Martinez',
-                role: 'Hospital Chief Executive Officer',
+                title: 'Chief Executive Officer',
+                role: 'Hospital CEO',
                 description: 'Concerned about reputation, costs, and regulatory compliance',
                 stress_level: 'Medium',
-                priorities: ['Public relations', 'Financial impact', 'Board communication']
+                priorities: ['Public relations', 'Financial impact', 'Board communication'],
+                personality: 'strategic, concerned about reputation, business-focused',
+                responses: {
+                    greeting: "Martinez here. I need a full briefing on this outage. The board is asking questions and I need answers.",
+                    situation: "How widespread is this? Are other hospitals affected? I'm getting calls from the media already.",
+                    help: "I need talking points for the board meeting in an hour. What's our communication strategy? Are we notifying patients?",
+                    timeline: "The longer this goes, the worse it looks. What's our worst-case scenario? Do we need to activate disaster protocols?",
+                    pressure: "This could be front page news. I need hourly updates and a clear action plan I can present to stakeholders."
+                }
             },
             'cio_johnson': {
-                name: 'David Johnson - CIO',
-                role: 'Chief Information Officer',
+                name: 'David Johnson',
+                title: 'Chief Information Officer',
+                role: 'CIO',
                 description: 'Leading incident response, managing IT team, fielding calls from all departments',
                 stress_level: 'Very High',
-                priorities: ['System restoration', 'Incident command', 'Stakeholder communication']
+                priorities: ['System restoration', 'Incident command', 'Stakeholder communication'],
+                personality: 'technical, under pressure, coordinating multiple efforts',
+                responses: {
+                    greeting: "Johnson, CIO. I'm running the incident response. Epic's primary datacenter lost power. Generators failed.",
+                    situation: "We're coordinating with Epic support, our vendors, and internal teams. Backup systems are overwhelmed with the load.",
+                    help: "Keep your teams focused on patient safety protocols. We're working multiple recovery paths simultaneously.",
+                    timeline: "Epic estimates 4-6 hours for full restoration. We might get partial systems back in 2-3 hours if the generator issue is resolved.",
+                    pressure: "This is our worst-case scenario. I need all departments to activate their downtime procedures immediately."
+                }
+            }
+        };
+
+        // Crisis events that can be triggered
+        const crisisEvents = {
+            trauma: {
+                title: "🚨 LEVEL 1 TRAUMA INCOMING",
+                description: "Multi-vehicle accident victims arriving in 3 minutes. Critical documentation needed.",
+                impact: "ED overwhelmed, immediate paper workflow required"
+            },
+            media: {
+                title: "📺 MEDIA INQUIRY",
+                description: "Channel 7 News calling about 'computer problems' affecting patient care.",
+                impact: "Public relations crisis, CEO needs immediate talking points"
+            },
+            vendor: {
+                title: "🔧 EPIC VENDOR UPDATE",
+                description: "Epic support provides recovery timeline: 4-6 hours for full restoration.",
+                impact: "Long-term downtime procedures must be activated"
+            },
+            recovery: {
+                title: "✅ PARTIAL RECOVERY",
+                description: "Lab systems coming back online. Medication orders still down.",
+                impact: "Mixed relief and continued pressure on clinical workflows"
             }
         };
 
@@ -370,269 +506,4 @@
         let currentTeam = '';
         let selectedPersona = '';
         let messages = [];
-
-        // Initialize the page
-        function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const mode = urlParams.get('mode');
-            const team = urlParams.get('team');
-
-            if (mode === 'instructor') {
-                goToInstructor();
-            } else if (mode === 'student' && team && teamRoles[team]) {
-                currentTeam = team;
-                goToStudent();
-            } else {
-                generateLinks();
-                populateTeamLinks();
-            }
-        }
-
-        // Generate shareable links
-        function generateLinks() {
-            const baseUrl = window.location.origin + window.location.pathname;
-            const instructorLink = baseUrl + '?mode=instructor';
-            document.getElementById('instructor-link').textContent = instructorLink;
-        }
-
-        // Populate team links
-        function populateTeamLinks() {
-            const baseUrl = window.location.origin + window.location.pathname;
-            const container = document.getElementById('team-links');
-            
-            Object.entries(teamRoles).forEach(([id, role]) => {
-                const teamLink = baseUrl + '?mode=student&team=' + id;
-                const div = document.createElement('div');
-                div.className = 'team-item';
-                div.innerHTML = `
-                    <div class="team-name">${role.name}</div>
-                    <div style="font-size: 0.9rem; color: #6b7280; margin-bottom: 10px;">${role.description}</div>
-                    <div class="link-box" style="font-size: 0.8rem;">${teamLink}</div>
-                    <button class="btn btn-copy" onclick="copyTeamLink('${teamLink}')">📋 Copy</button>
-                    <button class="btn btn-green" onclick="testTeam('${id}')">Test ${role.name}</button>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Navigation functions
-        function goToLauncher() {
-            document.getElementById('launcher').classList.remove('hidden');
-            document.getElementById('instructor').classList.add('hidden');
-            document.getElementById('student').classList.add('hidden');
-            currentView = 'launcher';
-            document.getElementById('status').textContent = '🟢 Ready';
-        }
-
-        function goToInstructor() {
-            document.getElementById('launcher').classList.add('hidden');
-            document.getElementById('instructor').classList.remove('hidden');
-            document.getElementById('student').classList.add('hidden');
-            currentView = 'instructor';
-            document.getElementById('status').textContent = '👨‍🏫 Instructor';
-            populateTeamStatus();
-        }
-
-        function goToStudent() {
-            document.getElementById('launcher').classList.add('hidden');
-            document.getElementById('instructor').classList.add('hidden');
-            document.getElementById('student').classList.remove('hidden');
-            currentView = 'student';
-            document.getElementById('status').textContent = '👩‍🎓 Student';
-            setupStudentView();
-        }
-
-        function testTeam(teamId) {
-            currentTeam = teamId;
-            goToStudent();
-        }
-
-        // Copy functions
-        function copyLink(type) {
-            const link = document.getElementById('instructor-link').textContent;
-            navigator.clipboard.writeText(link).then(() => {
-                alert('Instructor link copied to clipboard!');
-            });
-        }
-
-        function copyTeamLink(link) {
-            navigator.clipboard.writeText(link).then(() => {
-                alert('Team link copied to clipboard!');
-            });
-        }
-
-        // Setup student view
-        function setupStudentView() {
-            const team = teamRoles[currentTeam];
-            if (!team) return;
-
-            document.getElementById('current-team').textContent = team.name;
-            document.getElementById('team-role').textContent = team.name;
-            
-            const objectivesList = document.getElementById('team-objectives');
-            objectivesList.innerHTML = '';
-            team.objectives.forEach(objective => {
-                const li = document.createElement('li');
-                li.textContent = objective;
-                objectivesList.appendChild(li);
-            });
-
-            populatePersonas();
-        }
-
-        // Populate personas
-        function populatePersonas() {
-            const container = document.getElementById('persona-list');
-            container.innerHTML = '';
-            
-            Object.entries(personas).forEach(([id, persona]) => {
-                const div = document.createElement('div');
-                div.className = 'team-item';
-                div.style.cursor = 'pointer';
-                div.onclick = () => selectPersona(id);
-                
-                const stressColor = persona.stress_level === 'Very High' ? '#dc2626' : 
-                                   persona.stress_level === 'High' ? '#f97316' : '#eab308';
-                
-                div.innerHTML = `
-                    <div style="font-weight: bold;">${persona.name}</div>
-                    <div style="font-size: 0.9rem; color: #6b7280;">${persona.role}</div>
-                    <div style="font-size: 0.8rem; margin-top: 5px;">
-                        Stress: <span style="color: ${stressColor}; font-weight: bold;">${persona.stress_level}</span>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Persona selection
-        function selectPersona(personaId) {
-            selectedPersona = personaId;
-            const persona = personas[personaId];
-            
-            // Update UI
-            document.getElementById('message-input').disabled = false;
-            document.getElementById('message-input').placeholder = `Message ${persona.name}...`;
-            document.getElementById('send-btn').disabled = false;
-            
-            // Show persona info
-            const infoDiv = document.getElementById('persona-info');
-            infoDiv.style.display = 'block';
-            infoDiv.innerHTML = `
-                <strong>Currently talking to:</strong> ${persona.name}<br>
-                <strong>Their situation:</strong> ${persona.description}<br>
-                <strong>Key concerns:</strong> ${persona.priorities.join(', ')}
-            `;
-            
-            // Highlight selected persona
-            const personaItems = document.querySelectorAll('#persona-list .team-item');
-            personaItems.forEach(item => {
-                item.style.background = 'white';
-                item.style.borderColor = '#d1d5db';
-            });
-            personaItems[Object.keys(personas).indexOf(personaId)].style.background = '#eff6ff';
-            personaItems[Object.keys(personas).indexOf(personaId)].style.borderColor = '#3b82f6';
-        }
-
-        // Send message
-        function sendMessage() {
-            const input = document.getElementById('message-input');
-            const message = input.value.trim();
-            if (!message || !selectedPersona) return;
-
-            // Add user message
-            addMessage('student', message);
-            input.value = '';
-
-            // Simulate AI response
-            setTimeout(() => {
-                const persona = personas[selectedPersona];
-                const response = `[${persona.name}] Thank you for reaching out. Given the current EHR outage, my immediate concern is ${persona.priorities[0]}. What specific actions are you taking to address this crisis?`;
-                addMessage('persona', response);
-            }, 1500);
-        }
-
-        // Add message to chat
-        function addMessage(sender, content) {
-            const chatArea = document.getElementById('chat-area');
-            const messageDiv = document.createElement('div');
-            messageDiv.style.marginBottom = '10px';
-            
-            const time = new Date().toLocaleTimeString();
-            
-            if (sender === 'student') {
-                messageDiv.innerHTML = `
-                    <div style="text-align: right;">
-                        <div style="display: inline-block; background: #3b82f6; color: white; padding: 8px 12px; border-radius: 8px; max-width: 70%;">
-                            ${content}
-                        </div>
-                        <div style="font-size: 0.7rem; color: #6b7280; margin-top: 2px;">${time}</div>
-                    </div>
-                `;
-            } else {
-                const persona = personas[selectedPersona];
-                messageDiv.innerHTML = `
-                    <div style="text-align: left;">
-                        <div style="display: inline-block; background: white; border: 1px solid #d1d5db; padding: 8px 12px; border-radius: 8px; max-width: 70%;">
-                            <div style="font-size: 0.7rem; color: #6b7280; margin-bottom: 2px;">${persona.name}</div>
-                            ${content}
-                        </div>
-                        <div style="font-size: 0.7rem; color: #6b7280; margin-top: 2px;">${time}</div>
-                    </div>
-                `;
-            }
-            
-            chatArea.appendChild(messageDiv);
-            chatArea.scrollTop = chatArea.scrollHeight;
-            
-            // Clear welcome message
-            if (messages.length === 0) {
-                chatArea.innerHTML = '';
-            }
-            messages.push({sender, content, time});
-        }
-
-        // Populate team status for instructor
-        function populateTeamStatus() {
-            const container = document.getElementById('team-status');
-            container.innerHTML = '';
-            
-            Object.entries(teamRoles).forEach(([id, role]) => {
-                const div = document.createElement('div');
-                div.className = 'team-item';
-                div.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: bold;">${role.name}</div>
-                            <div style="font-size: 0.9rem; color: #6b7280;">${role.description}</div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <div style="width: 8px; height: 8px; background: #6b7280; border-radius: 50%;"></div>
-                                <span style="font-size: 0.9rem; color: #6b7280;">Offline</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 5px;">
-                        Score: 0/100 | Messages: 0 | Grade: F
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Handle Enter key in message input
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('message-input').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
-        });
-
-        // Initialize when page loads
-        window.onload = init;
-    </script>
-</body>
-</html>
-```
+        let simulationTimer = null;
