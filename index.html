@@ -4,14 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EHR Outage Crisis Simulation</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 20px; background: #f0f4f8; }
+    .hidden { display: none; }
+    .crisis-alert { background: #ffe4e6; border-left: 4px solid #e11d48; padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .event-notification { background: #dbeafe; margin: 5px 0; padding: 5px; border-left: 4px solid #3b82f6; }
+    .chat-box { background: white; border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: auto; margin-top: 10px; }
+    .chat-input { display: flex; margin-top: 10px; }
+    .chat-input input { flex: 1; padding: 5px; }
+    .chat-input button { padding: 5px 10px; }
+  </style>
   <script defer>
-    // Define global state
     let currentView = 'launcher';
     let currentTeam = '';
-    let simulationState = {
-      isActive: false,
-      startTime: null
-    };
+    let simulationState = { isActive: false, startTime: null };
 
     const teamRoles = {
       'it_ops': { name: 'IT Operations Command', description: 'Technical coordination team', objectives: ['Restore Epic system', 'Manage incident response'] },
@@ -25,19 +31,22 @@
       recovery: { title: "✅ PARTIAL RECOVERY", description: "Lab systems up. Meds still down.", impact: "Mixed pressure on workflows" }
     };
 
+    const chatResponses = [
+      "Please follow downtime protocols immediately.",
+      "We are prioritizing patient safety.",
+      "ETA on system recovery is currently unknown.",
+      "All teams should escalate urgent needs through the command center."
+    ];
+
     function copyLink(role) {
       const box = document.getElementById(role + '-link');
       navigator.clipboard.writeText(box.textContent);
       alert('Link copied to clipboard');
     }
 
-    function goToLauncher() {
-      switchView('launcher');
-    }
+    function goToLauncher() { switchView('launcher'); }
 
-    function goToInstructor() {
-      switchView('instructor');
-    }
+    function goToInstructor() { switchView('instructor'); }
 
     function goToStudent(team) {
       currentTeam = team;
@@ -113,6 +122,21 @@
       log.prepend(entry);
     }
 
+    function sendChat() {
+      const input = document.getElementById('chat-input-box');
+      const chatBox = document.getElementById('chat-box');
+      if (!input.value.trim()) return;
+      const userMessage = document.createElement('div');
+      userMessage.textContent = "👤 You: " + input.value;
+      chatBox.appendChild(userMessage);
+
+      const response = document.createElement('div');
+      response.textContent = "💬 System: " + chatResponses[Math.floor(Math.random() * chatResponses.length)];
+      chatBox.appendChild(response);
+      input.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
     window.onload = function () {
       populateLinks();
       const hash = window.location.hash.replace('#', '');
@@ -134,9 +158,7 @@
     <button onclick="goToLauncher()">Back</button>
     <button id="start-btn" onclick="startSimulation()">Start</button>
     <button id="end-btn" onclick="endSimulation()" disabled>End</button>
-    <div id="crisis-timer" class="hidden">
-      Crisis Active - <span id="elapsed-time">00:00</span>
-    </div>
+    <div id="crisis-timer" class="hidden">Crisis Active</div>
     <div>
       <button id="trauma-btn" onclick="triggerEvent('trauma')" disabled>Trigger Trauma</button>
       <button id="media-btn" onclick="triggerEvent('media')" disabled>Trigger Media</button>
@@ -151,6 +173,11 @@
     <div>Status: <span id="system-status">CRITICAL</span></div>
     <ul id="team-objectives"></ul>
     <div id="crisis-alerts"></div>
+    <div class="chat-box" id="chat-box"></div>
+    <div class="chat-input">
+      <input type="text" id="chat-input-box" placeholder="Ask your team or a persona..." />
+      <button onclick="sendChat()">Send</button>
+    </div>
   </div>
 </body>
 </html>
